@@ -14,8 +14,7 @@ import org.keycloak.models.UserModel;
 
 import java.util.StringJoiner;
 
-public class CustomEventListenerProvider
-        implements EventListenerProvider {
+public class CustomEventListenerProvider implements EventListenerProvider {
 
     private static final Logger log = Logger.getLogger(CustomEventListenerProvider.class);
 
@@ -29,19 +28,16 @@ public class CustomEventListenerProvider
 
     @Override
     public void onEvent(Event event) {
-
         log.debugf("New %s Event", event.getType());
         log.debugf("onEvent-> %s", toString(event));
 
         if (EventType.REGISTER.equals(event.getType())) {
-
             event.getDetails().forEach((key, value) -> log.debugf("%s : %s", key, value));
 
             RealmModel realm = this.model.getRealm(event.getRealmId());
             UserModel user = this.session.users().getUserById(realm, event.getUserId());
             sendUserData(user);
         }
-
     }
 
     @Override
@@ -61,17 +57,16 @@ public class CustomEventListenerProvider
     }
 
     private void sendUserData(UserModel user) {
-        String data = """
+        String content = """
                 {
-                    "id": "%s",
-                    "email": "%s",
-                    "userName": "%s",
-                    "firstName": "%s",
-                    "lastName": "%s"
+                    "msgtype": "text",
+                    "text": {
+                        "content": "A new user has been created: \\nID: %s\\nEmail: %s\\nUsername: %s\\nFirst Name: %s\\nLast Name: %s"
+                    }
                 }
                 """.formatted(user.getId(), user.getEmail(), user.getUsername(), user.getFirstName(), user.getLastName());
         try {
-            Client.postService(data);
+            Client.postService(content);
             log.debug("A new user has been created and post API");
         } catch (Exception e) {
             log.errorf("Failed to call API: %s", e);
